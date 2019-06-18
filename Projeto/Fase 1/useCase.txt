@@ -1,0 +1,53 @@
+Name: Register public Fixer
+ID: 3
+Description: A fixers regists to the app for the first time
+Actors:
+	Primary: Fixer
+	Secundary: Back end
+Pre-condition: none
+Main Flow:
+	1. The use case starts when the fixer selects the option "register new Fixer".
+	2. The fixer insert its name.
+	3. The fixer insert its emailAddress.
+	4. The fixer types a password.
+	5. The fixer insert its location.
+	6. The fixer submits his request to create a new account, and a dialog message appears.
+	7. If the fixer chooses to submit.
+		7.1 The system creates a new fixer account in the system.
+//		7.2 The system notifies the city hall back end of the new registration
+//		7.3 The back end completes the registration.
+//		7.4 The new fixer is added to the city hall fixer's list.
+	8. If the fixer chooses not to submit.
+		8.1 The fixer can change its options until he's satisfied.
+
+Post-condition: A fixer was added to the system
+Alternative Flows:
+	AlreadyExistingName
+	FixerIsPrivate
+
+
+Alternative Flow: Register public Fixer:AlreadyExistingName
+ID: 3.1
+Description: The system penalizes the fixers based on the new submission.
+Actors:
+	Primary: Fixer
+Pre-condition: The fixer as entered an already existing name.
+Alternative Flow:
+	1. The alternative flow begins after step 2 of the main flow. 
+	2. The system informs the fixer that there is already a fixer with the inserted name.
+	3. A cross appears next to the name's textbox, indicating that the fixer can not choose that name.
+Post-condition: none.
+
+
+Alternative Flow: Register public Fixer:FixerIsPrivate
+ID: 3.2
+Description: The system congratulates the fixers based on the new submission.
+Actors:
+	Primary: Fixer
+Pre-condition: The fixer is already private.
+Alternative Flow:
+	1. The alternative flow begins after step 7 of the main flow. 
+	2. The system informs the fixer, through a dialog message, that the account cannot be created
+	   because the fixer is already a private fixer.
+	3. The systems returns the fixer to the initial page.
+Post-condition: none.

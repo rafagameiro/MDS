@@ -1,0 +1,205 @@
+model fixMyTown
+
+-- classes
+
+class AppInterface
+operations
+  removeProblem(ticketId : String)
+end
+
+class Controller
+attributes
+  currUser : User
+  data : Data
+operations
+  listProblem()
+end
+
+class ControllerCityHall < Controller
+operations
+  removeProblem(ticketId : String)
+  removeFunds(cost : Integer) : Integer
+end
+
+class FormInfo
+attributes
+  type : String
+  location: String
+operations
+  type(title : String)
+  typeSelect(type : String)
+  location(loc : String)
+end
+
+class Data
+attributes
+  ticketsDB : TicketsDB
+  problemsDB : ProblemsDB
+  fixersDB : FixersDB
+  usersDB : UsersDB
+operations
+  removeTicket(ticketId : String)
+end
+
+class FixersDB
+operations
+  isPrivate(fixer : Fixer) : Boolean
+end
+
+class UsersDB
+end
+
+class ProblemsDB
+operations
+  insertTicket(ticket : Ticket)
+  listProblems()
+end
+
+class TicketsDB
+operations
+  removeProblem(ticketId : String)
+end
+
+abstract class User
+end
+
+abstract class Fixer < User
+attributes
+  fixerId : String
+end
+
+class PublicFixer < Fixer
+end
+
+class PrivateFixer < Fixer
+end
+
+abstract class CityHallMember < User
+operations
+  removeFunds(cost: Integer) : Integer
+end
+
+class CityHall
+attributes
+  balance : Integer
+operations
+  removeFunds(cost: Integer) : Integer
+end
+
+class Support < CityHallMember
+end
+
+class Ticket
+attributes
+  ticketId : String
+  info : FormInfo
+end
+
+--associatons
+
+association interface between
+  AppInterface [1] role interface
+  ControllerCityHall [1] role controller
+end
+
+association currentUser between
+  Controller [1] role currController
+  User [1] role currUser
+end
+
+association data between
+  Controller [1] role currController
+  Data [1] role currData
+end
+
+association ticketsDatabase between
+  Data [1] role mainData
+  TicketsDB [0..1] role ticketDB 
+end
+
+association fixersDatabase between
+  Data [1] role mainData
+  FixersDB [0..1] role fixerDB
+end
+
+association problemsDatabase between
+  Data [1] role mainData
+  ProblemsDB [0..1] role problemDB
+end
+
+association fixersDB between
+  FixersDB [1] role fixerDB
+  Fixer [*] role fixers
+end
+
+association ticketsDB between
+  TicketsDB [1] role ticketDB
+  Ticket [*] role tickets
+end
+
+association problemsDB between
+  ProblemsDB [1] role problemDB
+  Ticket [*] role problems
+end
+
+association usersDB between
+  UsersDB [1] role userDB
+  User [*] role currUser
+end
+
+association usersDatabase between
+  Data [1] role mainData
+  UsersDB [0..1] role userDB
+end
+
+association cityHallBank between
+  CityHallMember [1..*] role members
+  CityHall [0..1] role account
+end
+
+association usersDBCityHall between
+  UsersDB [1] role userDB1
+  CityHallMember [*] role members
+end
+
+association formInfoTicket between
+  FormInfo [1] role info
+  Ticket [1] role ticket
+end
+
+--contraints
+
+constraints
+
+context CityHall::removeFunds(cost: Integer) : Integer
+pre insufficientBalance:  cost <= self.balance
+
+context ProblemsDB::listProblems()
+pre hasProblems: self.problems->notEmpty()
+
+context ProblemsDB::insertTicket(ticket : Ticket)
+pre notbelongsToProblems: self.problems->excludes(ticket)
+post belongsToProblems: self.problems->includes(ticket)
+
+context FixersDB::isPrivate(fixer : Fixer) : Boolean
+post notPrivate: self.fixers->excludes(fixer)
+
+context TicketsDB::removeProblem(ticketId : String)
+post notBelongsToTicketsDB: self.tickets->forAll(t: Ticket | t.ticketId <> ticketId)
+
+context FixersDB
+inv UniqueID:
+	self.fixers->forAll( f1, f2: Fixer | f1 <> f2 implies
+		f1.fixerId <> f2.fixerId )
+		
+context ControllerCityHall
+inv needsToBeMember:
+    self.data.usersDB.members->includes(self.currUser)
+    
+context TicketsDB
+inv duplicateProblems:
+    self.tickets->forAll( t1, t2: Ticket | t1 <> t2 implies
+        t1.info.location <> t2.info.location
+        and
+        t1.info.type <> t2.info.type)
+
